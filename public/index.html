@@ -62,6 +62,33 @@ const TEAMS = [
   ]},
 ];
 
+const NPC_TEAMS = [
+  { id: "owgr-4321", strategy: "OWGR", combo: "4·3·2·1", players: [
+    { name: "Scottie Scheffler", cost: 4 }, { name: "Cameron Young", cost: 3 },
+    { name: "J.J. Spaun", cost: 2 }, { name: "Ben Griffin", cost: 1 },
+  ]},
+  { id: "owgr-3322", strategy: "OWGR", combo: "3·3·2·2", players: [
+    { name: "Cameron Young", cost: 3 }, { name: "Tommy Fleetwood", cost: 3 },
+    { name: "J.J. Spaun", cost: 2 }, { name: "Robert MacIntyre", cost: 2 },
+  ]},
+  { id: "owgr-4222", strategy: "OWGR", combo: "4·2·2·2", players: [
+    { name: "Scottie Scheffler", cost: 4 }, { name: "J.J. Spaun", cost: 2 },
+    { name: "Robert MacIntyre", cost: 2 }, { name: "Chris Gotterup", cost: 2 },
+  ]},
+  { id: "m25-4321", strategy: "'25 Masters", combo: "4·3·2·1", players: [
+    { name: "Rory McIlroy", cost: 4 }, { name: "Justin Rose", cost: 3 },
+    { name: "Sungjae Im", cost: 2 }, { name: "Zach Johnson", cost: 1 },
+  ]},
+  { id: "m25-3322", strategy: "'25 Masters", combo: "3·3·2·2", players: [
+    { name: "Justin Rose", cost: 3 }, { name: "Patrick Reed", cost: 3 },
+    { name: "Sungjae Im", cost: 2 }, { name: "Jason Day", cost: 2 },
+  ]},
+  { id: "m25-4222", strategy: "'25 Masters", combo: "4·2·2·2", players: [
+    { name: "Rory McIlroy", cost: 4 }, { name: "Sungjae Im", cost: 2 },
+    { name: "Corey Conners", cost: 2 }, { name: "Jason Day", cost: 2 },
+  ]},
+];
+
 const POLL_MS = 3 * 60 * 1000;
 const costBg = { 4: "#b91c1c", 3: "#1d4ed8", 2: "#15803d", 1: "#7e22ce" };
 
@@ -178,6 +205,15 @@ function App() {
   const lv = ranked[0]?.total;
   const lastVal = [...ranked].reverse().find(t=>t.total!==null)?.total;
 
+  const rankedNpc = [...NPC_TEAMS].map(t=>({...t,total:tTot(t)})).sort((a,b)=>{
+    if(a.total===null&&b.total===null) return 0;
+    if(a.total===null) return 1; if(b.total===null) return -1;
+    if(a.total!==b.total) return a.total-b.total;
+    const as=sortedPlayerScores(a), bs=sortedPlayerScores(b);
+    for(let i=0;i<as.length;i++){ if(as[i]!==bs[i]) return as[i]-bs[i]; }
+    return 0;
+  });
+
   const fieldPlayers = Object.values(players).map(p=>({
     ...p,
     tier: getTier(p.name),
@@ -237,7 +273,7 @@ function App() {
       </div>
 
       <div style={{maxWidth:860,margin:"0 auto",padding:"0 16px",display:"flex",gap:0,borderBottom:"2px solid #e8e4da"}}>
-        {[["leaderboard","Leaderboard"],["players","Players"]].map(([k,label])=>{
+        {[["leaderboard","Leaderboard"],["players","Players"],["npc","NPC Teams"]].map(([k,label])=>{
           const active=view===k;
           return (
             <button key={k} onClick={()=>setView(k)} style={{flex:1,padding:"10px 14px",background:"transparent",border:"none",borderBottom:active?"3px solid #c9a84c":"3px solid transparent",marginBottom:-2,cursor:"pointer",fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:active?800:600,letterSpacing:2,color:active?"#0a3d1f":"#999"}}>
@@ -327,6 +363,68 @@ function App() {
             ))}
           </div>
         )}
+      </section>
+      )}
+
+      {view==="npc" && (
+      <section style={{maxWidth:860,margin:"0 auto",padding:"16px 16px 24px"}}>
+        <div style={{fontSize:12,color:"#777",marginBottom:10,lineHeight:1.5}}>
+          Algorithmic benchmark teams — 2 strategies × 3 tier combos. <strong>OWGR</strong>: pick the highest-ranked player from each required tier. <strong>'25 Masters</strong>: pick the best 2025 Masters finisher from each required tier. All picks are in the 2026 field.
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {rankedNpc.map((team,idx)=>{
+            const open=expandedId===team.id;
+            return(
+              <div key={team.id} onClick={()=>setExpandedId(open?null:team.id)} style={{background:"#fff",borderRadius:10,overflow:"hidden",cursor:"pointer",boxShadow:"0 1px 8px rgba(0,0,0,.06)",border:"1px dashed #8b7355"}}>
+                <div style={{display:"grid",gridTemplateColumns:"44px 1fr auto",alignItems:"center",padding:"14px 16px",gap:12}}>
+                  <div style={{width:38,height:38,borderRadius:"50%",background:"#f0ece2",color:"#555",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,fontFamily:"'Playfair Display',serif"}}>{idx+1}</div>
+                  <div>
+                    <div style={{fontSize:15,fontWeight:700,color:"#0a3d1f"}}>
+                      {team.strategy} <span style={{fontSize:11,color:"#8b7355",fontWeight:600,letterSpacing:1,marginLeft:4}}>· {team.combo}</span>
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
+                      {team.players.map((p,i)=>{
+                        const thru=gThru(p.name);
+                        return(
+                          <span key={i} style={{fontSize:11,background:"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4}}>
+                            <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:9,fontWeight:700}}>{p.cost}</span>
+                            {p.name}
+                            <span style={{fontWeight:700,color:sc(gTot(p.name)),fontSize:10}}>{fmt(gTot(p.name))}</span>
+                            {thru&&<span style={{fontSize:9,color:"#999"}}>({thru==="18"||thru==="F"?"F":thru})</span>}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div style={{fontSize:24,fontWeight:800,color:sc(team.total),fontFamily:"'Playfair Display',serif"}}>{fmt(team.total)}</div>
+                </div>
+                {open&&(
+                  <div style={{borderTop:"1px solid #eee",background:"#fafaf5",overflowX:"auto"}} onClick={e=>e.stopPropagation()}>
+                   <div style={{padding:"12px 16px",minWidth:440}}>
+                    <div style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,fontSize:10,fontWeight:700,color:"#888",letterSpacing:1,marginBottom:6,paddingLeft:28}}>
+                      <span/>{[1,2,3,4].map(r=><span key={r} style={{textAlign:"center"}}>R{r}</span>)}<span style={{textAlign:"center"}}>TOT</span><span style={{textAlign:"center"}}>THRU</span>
+                    </div>
+                    {team.players.map((p,i)=>{
+                      const s=findScore(p.name)||{};const tot=gTot(p.name);const thru=gThru(p.name);
+                      return(
+                        <div key={i} style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:i<3?"1px solid #eee":"none"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:10,fontWeight:700}}>{p.cost}</span>
+                            <span style={{fontSize:13,fontWeight:600}}>{p.name}</span>
+                          </div>
+                          {["r1","r2","r3","r4"].map(r=>{const v=s[r];return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:sc(v??null)}}>{fmt(v??null)}</span>;})}
+                          <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:sc(tot)}}>{fmt(tot)}</span>
+                          <span style={{textAlign:"center",fontSize:12,color:"#888"}}>{thru||"–"}</span>
+                        </div>
+                      );
+                    })}
+                   </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </section>
       )}
 
