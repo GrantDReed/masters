@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Masters 2026 — Fantasy Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: #f5f0e8; color: #1a1a1a; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+const TEAMS = [
+  { id: 0, name: "Adam Rowden", players: [
+    { name: "Xander Schauffele", cost: 4 }, { name: "Matt Fitzpatrick", cost: 3 },
+    { name: "Sungjae Im", cost: 2 }, { name: "Rasmus Højgaard", cost: 1 },
+  ]},
+  { id: 1, name: "Dave Gregory", players: [
+    { name: "Scottie Scheffler", cost: 4 }, { name: "Tommy Fleetwood", cost: 3 },
+    { name: "Sahith Theegala", cost: 2 }, { name: "Wyndham Clark", cost: 1 },
+  ]},
+  { id: 2, name: "Tom Seymour", players: [
+    { name: "Jon Rahm", cost: 4 }, { name: "Chris Gotterup", cost: 2 },
+    { name: "Sepp Straka", cost: 2 }, { name: "Adam Scott", cost: 2 },
+  ]},
+  { id: 3, name: "Ludo Webb", players: [
+    { name: "Matt Fitzpatrick", cost: 3 }, { name: "Tommy Fleetwood", cost: 3 },
+    { name: "Russell Henley", cost: 2 }, { name: "Corey Conners", cost: 2 },
+  ]},
+  { id: 4, name: "Louis Browne", players: [
+    { name: "Ludvig Åberg", cost: 4 }, { name: "Matt Fitzpatrick", cost: 3 },
+    { name: "Sungjae Im", cost: 2 }, { name: "Christiaan Bezuidenhout", cost: 1 },
+  ]},
+  { id: 5, name: "Will Emerson", players: [
+    { name: "Bryson DeChambeau", cost: 4 }, { name: "Viktor Hovland", cost: 3 },
+    { name: "Sahith Theegala", cost: 2 }, { name: "Wyndham Clark", cost: 1 },
+  ]},
+  { id: 6, name: "Darren Teague", players: [
+    { name: "Tommy Fleetwood", cost: 3 }, { name: "Justin Rose", cost: 3 },
+    { name: "Robert MacIntyre", cost: 2 }, { name: "Tyrrell Hatton", cost: 2 },
+  ]},
+  { id: 7, name: "Dan Harris", players: [
+    { name: "Scottie Scheffler", cost: 4 }, { name: "Cameron Young", cost: 3 },
+    { name: "Chris Gotterup", cost: 2 }, { name: "Carlos Ortiz", cost: 1 },
+  ]},
+  { id: 8, name: "Dave Hudson", players: [
+    { name: "Scottie Scheffler", cost: 4 }, { name: "Matt Fitzpatrick", cost: 3 },
+    { name: "Sungjae Im", cost: 2 }, { name: "Dustin Johnson", cost: 1 },
+  ]},
+  { id: 9, name: "Grant Reed", players: [
+    { name: "Scottie Scheffler", cost: 4 }, { name: "Patrick Reed", cost: 3 },
+    { name: "Corey Conners", cost: 2 }, { name: "Keegan Bradley", cost: 1 },
+  ]},
+];
+
+const POLL_MS = 3 * 60 * 1000;
+const costBg = { 4: "#b91c1c", 3: "#c2410c", 2: "#a16207", 1: "#65712b" };
+
+function normalize(n) {
+  return n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z ]/g,"").trim();
+}
+
+function App() {
+  const [players, setPlayers] = useState({});
+  const [expandedId, setExpandedId] = useState(null);
+  const [status, setStatus] = useState("idle");
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [msg, setMsg] = useState("");
+  const [autoPoll, setAutoPoll] = useState(true);
+  const intervalRef = useRef(null);
+
+  const findScore = useCallback((ourName) => {
+    if (players[ourName]) return players[ourName];
+    const norm = normalize(ourName);
+    for (const [k, v] of Object.entries(players)) {
+      if (normalize(k) === norm) return v;
+      // Last name match
+      const kLast = normalize(k).split(" ").pop();
+      const ourLast = norm.split(" ").pop();
+      if (kLast === ourLast && normalize(k)[0] === norm[0]) return v;
+    }
+    return null;
+  }, [players]);
+
+  const doFetch = useCallback(async () => {
+    setStatus("fetching");
+    try {
+      const res = await fetch("/api/scores");
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error + ": " + (data.details||[]).join(", "));
+      const map = {};
+      for (const p of data.players) { map[p.name] = p; }
+      setPlayers(map);
+      setLastUpdated(new Date());
+      setStatus("success");
+      setMsg(`${data.playerCount} players via ${data.source}`);
+    } catch (e) {
+      setStatus("error");
+      setMsg(e.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (autoPoll) {
+      doFetch();
+      intervalRef.current = setInterval(doFetch, POLL_MS);
+      return () => clearInterval(intervalRef.current);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+  }, [autoPoll, doFetch]);
+
+  const gTot = (name) => findScore(name)?.total ?? null;
+  const gThru = (name) => findScore(name)?.thru ?? null;
+  const tTot = (team) => { let t=0,h=false; for(const p of team.players){const s=gTot(p.name);if(s!==null){t+=s;h=true;}} return h?t:null; };
+
+  const ranked = [...TEAMS].map(t=>({...t,total:tTot(t)})).sort((a,b)=>{
+    if(a.total===null&&b.total===null) return a.id-b.id;
+    if(a.total===null) return 1; if(b.total===null) return -1;
+    return a.total-b.total;
+  });
+
+  const fmt=(n)=>{if(n===null||n===undefined)return"–";if(n===0)return"E";return n>0?`+${n}`:`${n}`;};
+  const sc=(n)=>{if(n===null)return"#999";if(n<0)return"#c0392b";if(n===0)return"#555";return"#2c3e50";};
+  const lv = ranked[0]?.total;
+
+  return (
+    <div>
+      <header style={{background:"linear-gradient(135deg,#0a3d1f 0%,#0d5a2c 40%,#0a3d1f 100%)",color:"#fff",textAlign:"center",paddingTop:32}}>
+        <div style={{paddingBottom:22}}>
+          <div style={{fontSize:13,letterSpacing:8,opacity:.6,fontFamily:"'Playfair Display',serif"}}>2026</div>
+          <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,42px)",fontWeight:900,letterSpacing:3,margin:"2px 0",lineHeight:1.1,textShadow:"0 2px 10px rgba(0,0,0,.3)"}}>THE MASTERS</h1>
+          <div style={{fontSize:12,letterSpacing:6,fontWeight:600,opacity:.85,background:"rgba(255,255,255,.12)",display:"inline-block",padding:"3px 14px",borderRadius:2,marginTop:4}}>FANTASY CHALLENGE</div>
+          <div style={{marginTop:10,fontSize:10,letterSpacing:3,opacity:.5}}>AUGUSTA NATIONAL &nbsp;◆&nbsp; APRIL 10–13 &nbsp;◆&nbsp; 10 TEAMS &nbsp;◆&nbsp; £10M BUDGET</div>
+        </div>
+        <div style={{height:4,background:"linear-gradient(90deg,#c9a84c,#f0d68a,#c9a84c,#f0d68a,#c9a84c)"}}/>
+      </header>
+
+      <div style={{maxWidth:860,margin:"0 auto",padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,fontSize:12,color:"#777"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:status==="fetching"?"#f59e0b":status==="error"?"#ef4444":autoPoll?"#22c55e":"#999",animation:status==="fetching"?"pulse 1s infinite":"none"}}/>
+            {status==="fetching"?"Fetching…":status==="error"?"Error":autoPoll?"Live · every 3 min":"Paused"}
+          </div>
+          {lastUpdated && <span style={{opacity:.7}}>Updated {lastUpdated.toLocaleTimeString()}</span>}
+          {msg && <span style={{fontSize:11,color:status==="error"?"#c0392b":"#888"}}>{msg}</span>}
+        </div>
+        <div style={{display:"flex",gap:6}}>
+          <button onClick={()=>setAutoPoll(!autoPoll)} style={{fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:600,padding:"6px 12px",border:"1px solid #ccc",borderRadius:6,cursor:"pointer",background:autoPoll?"#0a3d1f":"#fff",color:autoPoll?"#fff":"#555"}}>{autoPoll?"⏸ Pause":"▶ Live"}</button>
+          <button onClick={doFetch} disabled={status==="fetching"} style={{fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:600,padding:"6px 12px",border:"2px solid #0a3d1f",borderRadius:6,cursor:"pointer",background:"#fff",color:"#0a3d1f",opacity:status==="fetching"?.5:1}}>⛳ Refresh</button>
+        </div>
+      </div>
+
+      <section style={{maxWidth:860,margin:"0 auto",padding:"0 16px 24px"}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {ranked.map((team,idx)=>{
+            const pos=idx+1,isLeader=team.total!==null&&team.total===lv,open=expandedId===team.id;
+            return(
+              <div key={team.id} onClick={()=>setExpandedId(open?null:team.id)} style={{background:"#fff",borderRadius:10,overflow:"hidden",cursor:"pointer",boxShadow:isLeader?"0 3px 20px rgba(201,168,76,.3)":"0 1px 8px rgba(0,0,0,.06)",border:isLeader?"2px solid #c9a84c":"1px solid #e8e4da"}}>
+                <div style={{display:"grid",gridTemplateColumns:"44px 1fr auto",alignItems:"center",padding:"14px 16px",gap:12,background:isLeader?"linear-gradient(90deg,#fdf8e8,#fff9e0)":"transparent"}}>
+                  <div style={{width:38,height:38,borderRadius:"50%",background:isLeader?"#0a3d1f":"#f0ece2",color:isLeader?"#c9a84c":"#555",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:isLeader?18:16,fontFamily:"'Playfair Display',serif"}}>{isLeader?"🏆":pos}</div>
+                  <div>
+                    <div style={{fontSize:16,fontWeight:700,color:"#0a3d1f"}}>{team.name}</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:4}}>
+                      {team.players.map((p,i)=>{
+                        const thru=gThru(p.name);
+                        return(
+                          <span key={i} style={{fontSize:11,background:"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4}}>
+                            <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:9,fontWeight:700}}>{p.cost}</span>
+                            {p.name}
+                            <span style={{fontWeight:700,color:sc(gTot(p.name)),fontSize:10}}>{fmt(gTot(p.name))}</span>
+                            {thru&&<span style={{fontSize:9,color:"#999"}}>({thru==="18"||thru==="F"?"F":thru})</span>}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div style={{fontSize:24,fontWeight:800,color:sc(team.total),fontFamily:"'Playfair Display',serif"}}>{fmt(team.total)}</div>
+                </div>
+                {open&&(
+                  <div style={{borderTop:"1px solid #eee",padding:"12px 16px",background:"#fafaf5"}} onClick={e=>e.stopPropagation()}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr repeat(4,48px) 48px 48px",gap:4,fontSize:10,fontWeight:700,color:"#888",letterSpacing:1,marginBottom:6,paddingLeft:28}}>
+                      <span/>{[1,2,3,4].map(r=><span key={r} style={{textAlign:"center"}}>R{r}</span>)}<span style={{textAlign:"center"}}>TOT</span><span style={{textAlign:"center"}}>THRU</span>
+                    </div>
+                    {team.players.map((p,i)=>{
+                      const s=findScore(p.name)||{};const tot=gTot(p.name);const thru=gThru(p.name);
+                      return(
+                        <div key={i} style={{display:"grid",gridTemplateColumns:"1fr repeat(4,48px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:i<3?"1px solid #eee":"none"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:10,fontWeight:700}}>{p.cost}</span>
+                            <span style={{fontSize:13,fontWeight:600}}>{p.name}</span>
+                          </div>
+                          {["r1","r2","r3","r4"].map(r=>{const v=s[r];return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:sc(v??null)}}>{fmt(v??null)}</span>;})}
+                          <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:sc(tot)}}>{fmt(tot)}</span>
+                          <span style={{textAlign:"center",fontSize:12,color:"#888"}}>{thru||"–"}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      <footer style={{textAlign:"center",padding:"20px 16px 28px",fontSize:11,color:"#bbb",letterSpacing:2,fontStyle:"italic"}}>A tradition unlike any other™</footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
