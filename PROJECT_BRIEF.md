@@ -29,8 +29,9 @@ A live fantasy golf dashboard for 10 friends tracking the 2026 Masters Tournamen
 2. **Value tiers:** Golfers cost £4m, £3m, £2m, or £1m
 3. **Constraints:** Max one £4m player, max two £3m players per team
 4. **Scoring:** At the end of each round, each golfer's score relative to par is summed for the team total. Lowest total wins.
-5. **Cut rule:** After the cut (end of Round 2), each team gets ONE free transfer — swap a player who missed the cut for another player of the same or lower value who IS still in the tournament
+5. **Free transfer before Round 3:** After the cut (end of Round 2), each team may make ONE transfer — swap any player (cut or not) for another player of the same or lower value who IS still in the tournament. The transfer is optional.
 6. **Missed cut penalty:** If after the free transfer a team still has player(s) who missed the cut, those players are assigned the WORST score of the round (i.e., the highest score shot by any player that round) for Rounds 3 and 4
+7. **Tiebreaker:** If two or more teams finish level on total, the team whose single best player shot the lower score wins. If still tied, compare the next-best player, and so on down the roster.
 
 ---
 

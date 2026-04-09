@@ -4,14 +4,26 @@ const SOURCES = [
     url: "https://www.masters.com/en_US/scores/feeds/2026/scores.json",
     parse: (data) => {
       const players = data?.data?.player || [];
+      const parseTopar = (v) => {
+        if (v == null) return null;
+        if (v === "E") return 0;
+        const n = parseInt(v);
+        return isNaN(n) ? null : n;
+      };
+      const roundScore = (r) => {
+        if (!r) return null;
+        const s = r.roundStatus;
+        if (s !== "Playing" && s !== "Finished") return null;
+        return typeof r.fantasy === "number" ? r.fantasy : null;
+      };
       return players.map((p) => ({
         name: `${p.first_name} ${p.last_name}`,
-        total: p.topar != null ? parseInt(p.topar) : null,
+        total: parseTopar(p.topar),
         thru: p.thru || null,
-        r1: p.round1 != null ? parseInt(p.round1) - 72 : null,
-        r2: p.round2 != null ? parseInt(p.round2) - 72 : null,
-        r3: p.round3 != null ? parseInt(p.round3) - 72 : null,
-        r4: p.round4 != null ? parseInt(p.round4) - 72 : null,
+        r1: roundScore(p.round1),
+        r2: roundScore(p.round2),
+        r3: roundScore(p.round3),
+        r4: roundScore(p.round4),
         pos: p.pos || null,
         status: p.status || null,
       }));
