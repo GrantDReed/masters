@@ -13,6 +13,12 @@ A live fantasy golf dashboard for 10 friends tracking the 2026 Masters Tournamen
 - Basic leaderboard working with 10 teams, auto-refresh, expandable team cards
 - API proxy tries masters.com JSON feed first, ESPN endpoints as fallback
 - Fuzzy name matching handles accent differences (Åberg, Højgaard etc.)
+- Pre-tournament withdrawals already handled in commit `418504e`:
+  - Louis Browne: Bezuidenhout → Fred Couples
+  - Dave Gregory: Sahith Theegala → J.J. Spaun
+  - Will Emerson: Sahith Theegala → Robert MacIntyre
+  - The roster table further down in this brief is the *original* draft and is intentionally NOT edited — `public/index.html` is the source of truth for current rosters
+- **NOT YET DEPLOYED:** No live Vercel URL yet — deployment is the immediate next step. Vercel CLI/plugin is installed locally.
 - **NOT YET IMPLEMENTED:** Transfer window, missed-cut penalty scoring, rules display
 
 ---
@@ -123,11 +129,11 @@ These are called SERVER-SIDE from Vercel's edge, so no CORS issues. The response
 ---
 
 ## Tournament Schedule (all times ET / BST)
-- **Round 1:** Thursday April 10 (first tee 7:40am ET)
-- **Round 2:** Friday April 11
+- **Round 1:** Thursday April 9 (first tee 7:40am ET)
+- **Round 2:** Friday April 10
 - **Cut:** After Round 2 (top 50 and ties)
-- **Round 3:** Saturday April 12
-- **Round 4:** Sunday April 13
+- **Round 3:** Saturday April 11
+- **Round 4:** Sunday April 12
 
 ---
 

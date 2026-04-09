@@ -76,6 +76,7 @@ function App() {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [msg, setMsg] = useState("");
   const [autoPoll, setAutoPoll] = useState(true);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const intervalRef = useRef(null);
 
   const findScore = useCallback((ourName) => {
@@ -141,7 +142,7 @@ function App() {
           <div style={{fontSize:13,letterSpacing:8,opacity:.6,fontFamily:"'Playfair Display',serif"}}>2026</div>
           <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,5vw,42px)",fontWeight:900,letterSpacing:3,margin:"2px 0",lineHeight:1.1,textShadow:"0 2px 10px rgba(0,0,0,.3)"}}>THE MASTERS</h1>
           <div style={{fontSize:12,letterSpacing:6,fontWeight:600,opacity:.85,background:"rgba(255,255,255,.12)",display:"inline-block",padding:"3px 14px",borderRadius:2,marginTop:4}}>FANTASY CHALLENGE</div>
-          <div style={{marginTop:10,fontSize:10,letterSpacing:3,opacity:.5}}>AUGUSTA NATIONAL &nbsp;◆&nbsp; APRIL 10–13 &nbsp;◆&nbsp; 10 TEAMS &nbsp;◆&nbsp; £10M BUDGET</div>
+          <div style={{marginTop:10,fontSize:10,letterSpacing:3,opacity:.5}}>AUGUSTA NATIONAL &nbsp;◆&nbsp; APRIL 9–12 &nbsp;◆&nbsp; 10 TEAMS &nbsp;◆&nbsp; £10M BUDGET</div>
         </div>
         <div style={{height:4,background:"linear-gradient(90deg,#c9a84c,#f0d68a,#c9a84c,#f0d68a,#c9a84c)"}}/>
       </header>
@@ -159,6 +160,25 @@ function App() {
           <button onClick={()=>setAutoPoll(!autoPoll)} style={{fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:600,padding:"6px 12px",border:"1px solid #ccc",borderRadius:6,cursor:"pointer",background:autoPoll?"#0a3d1f":"#fff",color:autoPoll?"#fff":"#555"}}>{autoPoll?"⏸ Pause":"▶ Live"}</button>
           <button onClick={doFetch} disabled={status==="fetching"} style={{fontFamily:"'DM Sans',sans-serif",fontSize:12,fontWeight:600,padding:"6px 12px",border:"2px solid #0a3d1f",borderRadius:6,cursor:"pointer",background:"#fff",color:"#0a3d1f",opacity:status==="fetching"?.5:1}}>⛳ Refresh</button>
         </div>
+      </div>
+
+      <div style={{maxWidth:860,margin:"0 auto",padding:"0 16px 16px"}}>
+        <button onClick={()=>setRulesOpen(!rulesOpen)} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 14px",background:rulesOpen?"#0a3d1f":"#fff",color:rulesOpen?"#c9a84c":"#0a3d1f",border:"1px solid #0a3d1f",borderRadius:6,cursor:"pointer",fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:700,letterSpacing:2}}>
+          <span>RULES OF THE CHALLENGE</span>
+          <span style={{fontSize:12}}>{rulesOpen?"▲":"▼"}</span>
+        </button>
+        {rulesOpen && (
+          <div style={{marginTop:8,padding:"18px 20px",background:"#fff",border:"1px solid #e8e4da",borderRadius:8,fontFamily:"'DM Sans',sans-serif",fontSize:13,lineHeight:1.6,color:"#333"}}>
+            <ol style={{margin:0,paddingLeft:20}}>
+              <li style={{marginBottom:10}}><strong>Budget:</strong> Each player has a £10m budget to pick 4 golfers.</li>
+              <li style={{marginBottom:10}}><strong>Value tiers:</strong> Golfers cost £4m, £3m, £2m, or £1m.</li>
+              <li style={{marginBottom:10}}><strong>Squad limits:</strong> Max one £4m player and max two £3m players per team.</li>
+              <li style={{marginBottom:10}}><strong>Scoring:</strong> Each round, every golfer's score relative to par is summed for the team total. <em>Lowest total wins.</em></li>
+              <li style={{marginBottom:10}}><strong>Free transfer after the cut:</strong> After Round 2, each team gets ONE free transfer — swap a player who missed the cut for another player of the same or lower value who is still in the tournament.</li>
+              <li><strong>Missed cut penalty:</strong> If after the free transfer a team still has any player(s) who missed the cut, those players are assigned the <em>worst score of the round</em> (i.e. the highest round score shot by any player still playing) for Rounds 3 and 4.</li>
+            </ol>
+          </div>
+        )}
       </div>
 
       <section style={{maxWidth:860,margin:"0 auto",padding:"0 16px 24px"}}>
