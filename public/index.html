@@ -63,29 +63,29 @@ const TEAMS = [
 ];
 
 const NPC_TEAMS = [
-  { id: "owgr-4321", strategy: "OWGR", combo: "4·3·2·1", players: [
-    { name: "Scottie Scheffler", cost: 4 }, { name: "Cameron Young", cost: 3 },
-    { name: "J.J. Spaun", cost: 2 }, { name: "Ben Griffin", cost: 1 },
+  { id: "owgr-4321", strategy: "OWGR", detailLabel: "OWGR", combo: "4·3·2·1", players: [
+    { name: "Scottie Scheffler", cost: 4, detail: "#1" }, { name: "Cameron Young", cost: 3, detail: "#3" },
+    { name: "J.J. Spaun", cost: 2, detail: "#5" }, { name: "Ben Griffin", cost: 1, detail: "#16" },
   ]},
-  { id: "owgr-3322", strategy: "OWGR", combo: "3·3·2·2", players: [
-    { name: "Cameron Young", cost: 3 }, { name: "Tommy Fleetwood", cost: 3 },
-    { name: "J.J. Spaun", cost: 2 }, { name: "Robert MacIntyre", cost: 2 },
+  { id: "owgr-3322", strategy: "OWGR", detailLabel: "OWGR", combo: "3·3·2·2", players: [
+    { name: "Cameron Young", cost: 3, detail: "#3" }, { name: "Tommy Fleetwood", cost: 3, detail: "#4" },
+    { name: "J.J. Spaun", cost: 2, detail: "#5" }, { name: "Robert MacIntyre", cost: 2, detail: "#8" },
   ]},
-  { id: "owgr-4222", strategy: "OWGR", combo: "4·2·2·2", players: [
-    { name: "Scottie Scheffler", cost: 4 }, { name: "J.J. Spaun", cost: 2 },
-    { name: "Robert MacIntyre", cost: 2 }, { name: "Chris Gotterup", cost: 2 },
+  { id: "owgr-4222", strategy: "OWGR", detailLabel: "OWGR", combo: "4·2·2·2", players: [
+    { name: "Scottie Scheffler", cost: 4, detail: "#1" }, { name: "J.J. Spaun", cost: 2, detail: "#5" },
+    { name: "Robert MacIntyre", cost: 2, detail: "#8" }, { name: "Chris Gotterup", cost: 2, detail: "#11" },
   ]},
-  { id: "m25-4321", strategy: "'25 Masters", combo: "4·3·2·1", players: [
-    { name: "Rory McIlroy", cost: 4 }, { name: "Justin Rose", cost: 3 },
-    { name: "Sungjae Im", cost: 2 }, { name: "Zach Johnson", cost: 1 },
+  { id: "m25-4321", strategy: "'25 Masters", detailLabel: "'25", combo: "4·3·2·1", players: [
+    { name: "Rory McIlroy", cost: 4, detail: "T1" }, { name: "Justin Rose", cost: 3, detail: "T1" },
+    { name: "Sungjae Im", cost: 2, detail: "T5" }, { name: "Zach Johnson", cost: 1, detail: "T8" },
   ]},
-  { id: "m25-3322", strategy: "'25 Masters", combo: "3·3·2·2", players: [
-    { name: "Justin Rose", cost: 3 }, { name: "Patrick Reed", cost: 3 },
-    { name: "Sungjae Im", cost: 2 }, { name: "Jason Day", cost: 2 },
+  { id: "m25-3322", strategy: "'25 Masters", detailLabel: "'25", combo: "3·3·2·2", players: [
+    { name: "Justin Rose", cost: 3, detail: "T1" }, { name: "Patrick Reed", cost: 3, detail: "T3" },
+    { name: "Sungjae Im", cost: 2, detail: "T5" }, { name: "Jason Day", cost: 2, detail: "T8" },
   ]},
-  { id: "m25-4222", strategy: "'25 Masters", combo: "4·2·2·2", players: [
-    { name: "Rory McIlroy", cost: 4 }, { name: "Sungjae Im", cost: 2 },
-    { name: "Corey Conners", cost: 2 }, { name: "Jason Day", cost: 2 },
+  { id: "m25-4222", strategy: "'25 Masters", detailLabel: "'25", combo: "4·2·2·2", players: [
+    { name: "Rory McIlroy", cost: 4, detail: "T1" }, { name: "Sungjae Im", cost: 2, detail: "T5" },
+    { name: "Corey Conners", cost: 2, detail: "T8" }, { name: "Jason Day", cost: 2, detail: "T8" },
   ]},
 ];
 
@@ -400,18 +400,19 @@ function App() {
                 </div>
                 {open&&(
                   <div style={{borderTop:"1px solid #eee",background:"#fafaf5",overflowX:"auto"}} onClick={e=>e.stopPropagation()}>
-                   <div style={{padding:"12px 16px",minWidth:440}}>
-                    <div style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,fontSize:10,fontWeight:700,color:"#888",letterSpacing:1,marginBottom:6,paddingLeft:28}}>
-                      <span/>{[1,2,3,4].map(r=><span key={r} style={{textAlign:"center"}}>R{r}</span>)}<span style={{textAlign:"center"}}>TOT</span><span style={{textAlign:"center"}}>THRU</span>
+                   <div style={{padding:"12px 16px",minWidth:480}}>
+                    <div style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) 44px repeat(4,42px) 48px 48px",gap:4,fontSize:10,fontWeight:700,color:"#888",letterSpacing:1,marginBottom:6,paddingLeft:28}}>
+                      <span/><span style={{textAlign:"center"}}>{team.detailLabel}</span>{[1,2,3,4].map(r=><span key={r} style={{textAlign:"center"}}>R{r}</span>)}<span style={{textAlign:"center"}}>TOT</span><span style={{textAlign:"center"}}>THRU</span>
                     </div>
                     {team.players.map((p,i)=>{
                       const s=findScore(p.name)||{};const tot=gTot(p.name);const thru=gThru(p.name);
                       return(
-                        <div key={i} style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:i<3?"1px solid #eee":"none"}}>
+                        <div key={i} style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) 44px repeat(4,42px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:i<3?"1px solid #eee":"none"}}>
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:10,fontWeight:700}}>{p.cost}</span>
                             <span style={{fontSize:13,fontWeight:600}}>{p.name}</span>
                           </div>
+                          <span style={{textAlign:"center",fontSize:12,fontWeight:700,color:"#8b7355"}}>{p.detail}</span>
                           {["r1","r2","r3","r4"].map(r=>{const v=s[r];return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:sc(v??null)}}>{fmt(v??null)}</span>;})}
                           <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:sc(tot)}}>{fmt(tot)}</span>
                           <span style={{textAlign:"center",fontSize:12,color:"#888"}}>{thru||"–"}</span>
