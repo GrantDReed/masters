@@ -404,7 +404,7 @@ function App() {
                             {wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}
                             {isIn&&<span style={{fontSize:9,fontWeight:700,color:"#15803d",marginLeft:2}}>↑IN</span>}
                             {isMc&&<span style={{fontSize:9,fontWeight:700,color:"#dc2626",marginLeft:2}}>MC</span>}
-                            <span style={{fontWeight:700,color:isMc?"#dc2626":sc(contrib),fontSize:10}}>{fmt(contrib)}</span>
+                            <span style={{fontWeight:700,color:sc(contrib),fontSize:10}}>{fmt(contrib)}</span>
                             {!isOut&&thru&&<span style={{fontSize:9,color:"#999"}}>({thru==="18"||thru==="F"?"F":thru})</span>}
                           </span>
                         );
@@ -444,7 +444,7 @@ function App() {
                             const v=isPenalty?worstRound(r):(grayOut?null:s[r]);
                             return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:grayOut?"#ccc":isPenalty?"#ea580c":sc(v??null),fontStyle:isPenalty?"italic":"normal"}}>{grayOut?"✕":fmt(v??null)}</span>;
                           })}
-                          <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:isMc?"#dc2626":sc(contrib)}}>{fmt(contrib)}</span>
+                          <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:sc(contrib)}}>{fmt(contrib)}</span>
                           <span style={{textAlign:"center",fontSize:12,color:"#888"}}>{isOut?"":thru||"–"}</span>
                         </div>
                         </React.Fragment>
