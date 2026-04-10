@@ -96,7 +96,7 @@ const NPC_TEAMS = [
 ];
 
 const TRANSFERS = [
-  // { teamId: 0, out: "Rasmus Højgaard", in: "Some Player", inCost: 1 },
+  // Populate after R2 cut: { teamId: 0, out: "Player Out", in: "Player In", inCost: 1 },
 ];
 
 const POLL_MS = 3 * 60 * 1000;
@@ -199,8 +199,16 @@ function App() {
 
   const gTot = (name) => findScore(name)?.total ?? null;
   const gThru = (name) => findScore(name)?.thru ?? null;
-  const gRound = (name, r) => findScore(name)?.[r] ?? null;
-  const isMC = (name) => { const s = findScore(name); return s?.status === "cut" || s?.thru === "MC" || s?.thru === "CUT"; };
+
+  // Cut line: top 50 and ties after 36 holes
+  const scoredPlayers = Object.values(players).filter(p => p.total != null).sort((a, b) => a.total - b.total);
+  const cutScore = scoredPlayers.length >= 50 ? scoredPlayers[49].total : null;
+  const isMC = (name) => {
+    if (cutScore === null) return false;
+    const s = findScore(name);
+    if (!s || s.total == null) return false;
+    return s.total > cutScore;
+  };
 
   // Worst round score among all active players (for missed-cut penalty)
   const worstRound = (rKey) => {
@@ -414,15 +422,18 @@ function App() {
                         <div style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:!isIn&&i<team.players.length-1?"1px solid #eee":"none",opacity:isOut?.5:1}}>
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:10,fontWeight:700}}>{p.cost}</span>
-                            <span style={{fontSize:13,fontWeight:600,textDecoration:isOut?"line-through":"none"}}>{p.name}{wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}</span>
-                            {isIn&&<span style={{fontSize:9,fontWeight:700,color:"#15803d",marginLeft:4}}>↑IN</span>}
-                            {isMc&&<span style={{fontSize:9,fontWeight:700,color:"#dc2626",marginLeft:4}}>MC</span>}
+                            <div>
+                              <span style={{fontSize:13,fontWeight:600,textDecoration:isOut?"line-through":"none"}}>{p.name}{wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}</span>
+                              {isIn&&<span style={{fontSize:9,fontWeight:700,color:"#15803d",marginLeft:4}}>↑IN</span>}
+                              {isMc&&<span style={{fontSize:9,fontWeight:700,color:"#dc2626",marginLeft:4}}>MC</span>}
+                              {isMc&&<div style={{fontSize:10,color:"#ea580c",fontStyle:"italic",marginTop:1}}>R3/R4 = worst active round score</div>}
+                            </div>
                           </div>
                           {["r1","r2","r3","r4"].map(r=>{
                             const grayOut=(isOut&&(r==="r3"||r==="r4"))||(isIn&&(r==="r1"||r==="r2"));
                             const isPenalty=isMc&&(r==="r3"||r==="r4");
                             const v=isPenalty?worstRound(r):(grayOut?null:s[r]);
-                            return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:grayOut?"#ccc":isPenalty?"#ea580c":sc(v??null),fontStyle:isPenalty?"italic":"normal"}}>{grayOut?"–":fmt(v??null)}</span>;
+                            return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:grayOut?"#ccc":isPenalty?"#ea580c":sc(v??null),fontStyle:isPenalty?"italic":"normal"}}>{grayOut?"✕":fmt(v??null)}</span>;
                           })}
                           <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:isMc?"#dc2626":sc(contrib)}}>{fmt(contrib)}</span>
                           <span style={{textAlign:"center",fontSize:12,color:"#888"}}>{isOut?"":thru||"–"}</span>
@@ -454,7 +465,7 @@ function App() {
               {showCutLine&&(
                 <div style={{display:"flex",alignItems:"center",gap:10,margin:"6px 0"}}>
                   <div style={{flex:1,height:2,background:"#dc2626"}}/>
-                  <span style={{fontSize:11,fontWeight:700,color:"#dc2626",letterSpacing:2,whiteSpace:"nowrap"}}>✂ CUT LINE</span>
+                  <span style={{fontSize:11,fontWeight:700,color:"#dc2626",letterSpacing:2,whiteSpace:"nowrap"}}>✂ PROJECTED CUT {cutScore!==null&&`(${fmt(cutScore)})`}</span>
                   <div style={{flex:1,height:2,background:"#dc2626"}}/>
                 </div>
               )}
