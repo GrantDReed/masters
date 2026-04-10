@@ -142,6 +142,7 @@ function teamsOwning(apiName) {
 function App() {
   const [players, setPlayers] = useState({});
   const [expandedId, setExpandedId] = useState(null);
+  const [expandedPlayer, setExpandedPlayer] = useState(null);
   const [status, setStatus] = useState("idle");
   const [lastUpdated, setLastUpdated] = useState(null);
   const [msg, setMsg] = useState("");
@@ -352,21 +353,43 @@ function App() {
           <div style={{textAlign:"center",padding:"40px 16px",color:"#999",fontSize:13}}>Loading field…</div>
         ) : (
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            {fieldPlayers.map((p,i)=>(
-              <div key={i} style={{background:"#fff",borderRadius:8,padding:"10px 14px",border:"1px solid #e8e4da",display:"grid",gridTemplateColumns:"28px 1fr auto",gap:10,alignItems:"center"}}>
-                <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:p.tier?costBg[p.tier]:"#ccc",color:"#fff",fontSize:11,fontWeight:700}}>{p.tier??"?"}</span>
-                <div style={{minWidth:0}}>
-                  <div style={{fontSize:14,fontWeight:600,color:"#0a3d1f"}}>{p.name}</div>
-                  {p.owners.length>0 && (
-                    <div style={{fontSize:11,color:"#888",marginTop:2}}>owned by {p.owners.map(o=>o.split(" ").pop()).join(" · ")}</div>
-                  )}
+            {fieldPlayers.map((p,i)=>{
+              const open=expandedPlayer===p.name;
+              return(
+              <div key={i} onClick={()=>setExpandedPlayer(open?null:p.name)} style={{background:"#fff",borderRadius:8,border:"1px solid #e8e4da",cursor:"pointer",overflow:"hidden"}}>
+                <div style={{padding:"10px 14px",display:"grid",gridTemplateColumns:"28px 1fr auto",gap:10,alignItems:"center"}}>
+                  <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:p.tier?costBg[p.tier]:"#ccc",color:"#fff",fontSize:11,fontWeight:700}}>{p.tier??"?"}</span>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:14,fontWeight:600,color:"#0a3d1f"}}>{p.name}</div>
+                    {p.owners.length>0 && (
+                      <div style={{fontSize:11,color:"#888",marginTop:2}}>owned by {p.owners.map(o=>o.split(" ").pop()).join(" · ")}</div>
+                    )}
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:16,fontWeight:800,color:sc(p.total),fontFamily:"'Playfair Display',serif"}}>{fmt(p.total)}</div>
+                    {p.thru && <div style={{fontSize:10,color:"#999",marginTop:1}}>{p.thru==="18"||p.thru==="F"?"F":`thru ${p.thru}`}</div>}
+                  </div>
                 </div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:16,fontWeight:800,color:sc(p.total),fontFamily:"'Playfair Display',serif"}}>{fmt(p.total)}</div>
-                  {p.thru && <div style={{fontSize:10,color:"#999",marginTop:1}}>{p.thru==="18"||p.thru==="F"?"F":`thru ${p.thru}`}</div>}
-                </div>
+                {open && (
+                  <div style={{borderTop:"1px solid #eee",background:"#fafaf5",padding:"10px 14px",display:"grid",gridTemplateColumns:"repeat(4,1fr) 56px",gap:6}} onClick={e=>e.stopPropagation()}>
+                    {[1,2,3,4].map(r=>{
+                      const v=p["r"+r];
+                      return(
+                        <div key={r} style={{textAlign:"center"}}>
+                          <div style={{fontSize:9,fontWeight:700,color:"#888",letterSpacing:1}}>R{r}</div>
+                          <div style={{fontSize:15,fontWeight:700,color:sc(v??null),fontFamily:"'Playfair Display',serif"}}>{fmt(v??null)}</div>
+                        </div>
+                      );
+                    })}
+                    <div style={{textAlign:"center",borderLeft:"1px solid #e8e4da"}}>
+                      <div style={{fontSize:9,fontWeight:700,color:"#888",letterSpacing:1}}>POS</div>
+                      <div style={{fontSize:13,fontWeight:700,color:"#555"}}>{p.pos||"–"}</div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
