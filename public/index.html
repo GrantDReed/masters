@@ -473,11 +473,11 @@ function App() {
                   <div style={{flex:1,height:2,background:"#dc2626"}}/>
                 </div>
               )}
-              <div onClick={()=>setExpandedPlayer(open?null:p.name)} style={{background:"#fff",borderRadius:8,border:p.cut?"1px solid #e8d4d4":"1px solid #e8e4da",cursor:"pointer",overflow:"hidden",opacity:p.cut?.6:1}}>
+              <div onClick={()=>setExpandedPlayer(open?null:p.name)} style={{background:"#fff",borderRadius:8,border:(p.cut&&r2Done)?"1px solid #e8d4d4":"1px solid #e8e4da",cursor:"pointer",overflow:"hidden",opacity:(p.cut&&r2Done)?.6:1}}>
                 <div style={{padding:"10px 14px",display:"grid",gridTemplateColumns:"28px 1fr auto",gap:10,alignItems:"center"}}>
                   <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:24,height:24,borderRadius:"50%",background:p.tier?costBg[p.tier]:"#ccc",color:"#fff",fontSize:11,fontWeight:700}}>{p.tier??"?"}</span>
                   <div style={{minWidth:0}}>
-                    <div style={{fontSize:14,fontWeight:600,color:p.cut?"#999":"#0a3d1f"}}>{p.name}{p.cut&&<span style={{fontSize:10,fontWeight:700,color:"#dc2626",marginLeft:6}}>MC</span>}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:(p.cut&&r2Done)?"#999":"#0a3d1f"}}>{p.name}{p.cut&&r2Done&&<span style={{fontSize:10,fontWeight:700,color:"#dc2626",marginLeft:6}}>MC</span>}</div>
                     {p.owners.length>0 && (
                       <div style={{fontSize:11,color:"#888",marginTop:2}}>owned by {p.owners.map(o=>o.split(" ").pop()).join(" · ")}</div>
                     )}
