@@ -95,6 +95,10 @@ const NPC_TEAMS = [
   ]},
 ];
 
+const TRANSFERS = [
+  // { teamId: 0, out: "Rasmus Højgaard", in: "Some Player", inCost: 1 },
+];
+
 const POLL_MS = 3 * 60 * 1000;
 const costBg = { 4: "#b91c1c", 3: "#1d4ed8", 2: "#15803d", 1: "#7e22ce" };
 
@@ -195,16 +199,82 @@ function App() {
 
   const gTot = (name) => findScore(name)?.total ?? null;
   const gThru = (name) => findScore(name)?.thru ?? null;
-  const tTot = (team) => { let t=0,h=false; for(const p of team.players){const s=gTot(p.name);if(s!==null){t+=s;h=true;}} return h?t:null; };
+  const gRound = (name, r) => findScore(name)?.[r] ?? null;
+  const isMC = (name) => { const s = findScore(name); return s?.status === "cut" || s?.thru === "MC" || s?.thru === "CUT"; };
 
-  const sortedPlayerScores = (team) => team.players.map(p=>gTot(p.name)??Infinity).sort((a,b)=>a-b);
-  const ranked = [...TEAMS].map(t=>({...t,total:tTot(t)})).sort((a,b)=>{
-    if(a.total===null&&b.total===null) return a.id-b.id;
-    if(a.total===null) return 1; if(b.total===null) return -1;
-    if(a.total!==b.total) return a.total-b.total;
-    const as=sortedPlayerScores(a), bs=sortedPlayerScores(b);
-    for(let i=0;i<as.length;i++){ if(as[i]!==bs[i]) return as[i]-bs[i]; }
-    return a.id-b.id;
+  // Worst round score among all active players (for missed-cut penalty)
+  const worstRound = (rKey) => {
+    let worst = null;
+    for (const p of Object.values(players)) {
+      const v = p[rKey];
+      if (v != null && (worst === null || v > worst)) worst = v;
+    }
+    return worst;
+  };
+
+  // Build effective roster with roles
+  const buildRoster = (team) => {
+    const tx = TRANSFERS.find(t => t.teamId === team.id);
+    return team.players.map(p => {
+      if (tx && nameMatches(p.name, tx.out)) return { ...p, role: "swapped-out" };
+      if (isMC(p.name) && !tx?.out) return { ...p, role: "mc" };
+      if (tx && isMC(p.name) && !nameMatches(p.name, tx.out)) return { ...p, role: "mc" };
+      return { ...p, role: "original" };
+    }).concat(tx ? [{ name: tx.in, cost: tx.inCost, role: "swapped-in" }] : []);
+  };
+
+  // Player's scoring contribution based on role
+  const playerContribution = (name, role) => {
+    const s = findScore(name);
+    if (!s) return null;
+    if (role === "original") return s.total ?? null;
+    if (role === "swapped-out") {
+      const r1 = s.r1, r2 = s.r2;
+      if (r1 == null && r2 == null) return null;
+      return (r1 ?? 0) + (r2 ?? 0);
+    }
+    if (role === "swapped-in") {
+      const r3 = s.r3, r4 = s.r4;
+      if (r3 == null && r4 == null) return null;
+      return (r3 ?? 0) + (r4 ?? 0);
+    }
+    if (role === "mc") {
+      const r1 = s.r1, r2 = s.r2;
+      const base = (r1 == null && r2 == null) ? null : (r1 ?? 0) + (r2 ?? 0);
+      const wr3 = worstRound("r3"), wr4 = worstRound("r4");
+      const penalty = (wr3 ?? 0) + (wr4 ?? 0);
+      if (base == null && wr3 == null && wr4 == null) return null;
+      return (base ?? 0) + penalty;
+    }
+    return s.total ?? null;
+  };
+
+  // Team total using effective roster
+  const tTot = (team) => {
+    const roster = team.players[0]?.role ? team.players : buildRoster(team);
+    let t = 0, h = false;
+    for (const p of roster) {
+      const c = playerContribution(p.name, p.role || "original");
+      if (c !== null) { t += c; h = true; }
+    }
+    return h ? t : null;
+  };
+
+  const sortedPlayerScores = (team) => {
+    const roster = team.players[0]?.role ? team.players : buildRoster(team);
+    return roster.filter(p => p.role !== "swapped-out").map(p => playerContribution(p.name, p.role || "original") ?? Infinity).sort((a, b) => a - b);
+  };
+
+  const ranked = [...TEAMS].map(t => {
+    const roster = buildRoster(t);
+    return { ...t, roster, players: roster, total: null };
+  }).map(t => ({ ...t, total: tTot(t) })).sort((a, b) => {
+    if (a.total === null && b.total === null) return a.id - b.id;
+    if (a.total === null) return 1; if (b.total === null) return -1;
+    if (a.total !== b.total) return a.total - b.total;
+    const as = sortedPlayerScores(a), bs = sortedPlayerScores(b);
+    for (let i = 0; i < as.length; i++) { if (as[i] !== bs[i]) return as[i] - bs[i]; }
+    return a.id - b.id;
   });
 
   const fmt=(n)=>{if(n===null||n===undefined)return"–";if(n===0)return"E";return n>0?`+${n}`:`${n}`;};
@@ -305,12 +375,17 @@ function App() {
                       {team.players.map((p,i)=>{
                         const thru=gThru(p.name);
                         const wheelchair=team.id===4&&p.name==="Fred Couples";
+                        const isOut=p.role==="swapped-out", isIn=p.role==="swapped-in", isMc=p.role==="mc";
+                        const contrib=playerContribution(p.name, p.role||"original");
                         return(
-                          <span key={i} style={{fontSize:11,background:"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4}}>
+                          <span key={i} style={{fontSize:11,background:isOut?"#ddd":"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4,opacity:isOut?.55:1}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:9,fontWeight:700}}>{p.cost}</span>
-                            {p.name}{wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}
-                            <span style={{fontWeight:700,color:sc(gTot(p.name)),fontSize:10}}>{fmt(gTot(p.name))}</span>
-                            {thru&&<span style={{fontSize:9,color:"#999"}}>({thru==="18"||thru==="F"?"F":thru})</span>}
+                            <span style={{textDecoration:isOut?"line-through":"none"}}>{p.name}</span>
+                            {wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}
+                            {isIn&&<span style={{fontSize:9,fontWeight:700,color:"#15803d",marginLeft:2}}>↑IN</span>}
+                            {isMc&&<span style={{fontSize:9,fontWeight:700,color:"#dc2626",marginLeft:2}}>MC</span>}
+                            <span style={{fontWeight:700,color:isMc?"#dc2626":sc(contrib),fontSize:10}}>{fmt(contrib)}</span>
+                            {!isOut&&thru&&<span style={{fontSize:9,color:"#999"}}>({thru==="18"||thru==="F"?"F":thru})</span>}
                           </span>
                         );
                       })}
@@ -325,18 +400,31 @@ function App() {
                       <span/>{[1,2,3,4].map(r=><span key={r} style={{textAlign:"center"}}>R{r}</span>)}<span style={{textAlign:"center"}}>TOT</span><span style={{textAlign:"center"}}>THRU</span>
                     </div>
                     {team.players.map((p,i)=>{
-                      const s=findScore(p.name)||{};const tot=gTot(p.name);const thru=gThru(p.name);
+                      const s=findScore(p.name)||{};const thru=gThru(p.name);
                       const wheelchair=team.id===4&&p.name==="Fred Couples";
+                      const isOut=p.role==="swapped-out", isIn=p.role==="swapped-in", isMc=p.role==="mc";
+                      const contrib=playerContribution(p.name, p.role||"original");
+                      const showDivider=isIn;
                       return(
-                        <div key={i} style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:i<3?"1px solid #eee":"none"}}>
+                        <React.Fragment key={i}>
+                        {showDivider&&<div style={{gridColumn:"1/-1",borderTop:"2px dashed #c9a84c",margin:"4px 0 2px 28px"}}/>}
+                        <div style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:!isIn&&i<team.players.length-1?"1px solid #eee":"none",opacity:isOut?.5:1}}>
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:10,fontWeight:700}}>{p.cost}</span>
-                            <span style={{fontSize:13,fontWeight:600}}>{p.name}{wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}</span>
+                            <span style={{fontSize:13,fontWeight:600,textDecoration:isOut?"line-through":"none"}}>{p.name}{wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}</span>
+                            {isIn&&<span style={{fontSize:9,fontWeight:700,color:"#15803d",marginLeft:4}}>↑IN</span>}
+                            {isMc&&<span style={{fontSize:9,fontWeight:700,color:"#dc2626",marginLeft:4}}>MC</span>}
                           </div>
-                          {["r1","r2","r3","r4"].map(r=>{const v=s[r];return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:sc(v??null)}}>{fmt(v??null)}</span>;})}
-                          <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:sc(tot)}}>{fmt(tot)}</span>
-                          <span style={{textAlign:"center",fontSize:12,color:"#888"}}>{thru||"–"}</span>
+                          {["r1","r2","r3","r4"].map(r=>{
+                            const grayOut=(isOut&&(r==="r3"||r==="r4"))||(isIn&&(r==="r1"||r==="r2"));
+                            const isPenalty=isMc&&(r==="r3"||r==="r4");
+                            const v=isPenalty?worstRound(r):(grayOut?null:s[r]);
+                            return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:grayOut?"#ccc":isPenalty?"#ea580c":sc(v??null),fontStyle:isPenalty?"italic":"normal"}}>{grayOut?"–":fmt(v??null)}</span>;
+                          })}
+                          <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:isMc?"#dc2626":sc(contrib)}}>{fmt(contrib)}</span>
+                          <span style={{textAlign:"center",fontSize:12,color:"#888"}}>{isOut?"":thru||"–"}</span>
                         </div>
+                        </React.Fragment>
                       );
                     })}
                    </div>
