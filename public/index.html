@@ -200,9 +200,11 @@ function App() {
   const gTot = (name) => findScore(name)?.total ?? null;
   const gThru = (name) => findScore(name)?.thru ?? null;
 
-  // Cut line: top 50 and ties after 36 holes
-  const scoredPlayers = Object.values(players).filter(p => p.total != null).sort((a, b) => a.total - b.total);
-  const cutScore = scoredPlayers.length >= 50 ? scoredPlayers[49].total : null;
+  // Cut line: top 50 and ties after 36 holes (only compute after R2 is complete)
+  const allPlayers = Object.values(players);
+  const r2Done = allPlayers.length > 0 && allPlayers.filter(p => p.r2 != null).length >= allPlayers.length * 0.9;
+  const scoredPlayers = allPlayers.filter(p => p.total != null).sort((a, b) => a.total - b.total);
+  const cutScore = r2Done && scoredPlayers.length >= 50 ? scoredPlayers[49].total : null;
   const isMC = (name) => {
     if (cutScore === null) return false;
     const s = findScore(name);
