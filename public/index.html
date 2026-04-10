@@ -200,16 +200,18 @@ function App() {
   const gTot = (name) => findScore(name)?.total ?? null;
   const gThru = (name) => findScore(name)?.thru ?? null;
 
-  // Cut line: top 50 and ties after 36 holes (only compute after R2 is complete)
+  // Cut line: top 50 and ties
   const allPlayers = Object.values(players);
   const r2Done = allPlayers.length > 0 && allPlayers.filter(p => p.r2 != null).length >= allPlayers.length * 0.9;
   const scoredPlayers = allPlayers.filter(p => p.total != null).sort((a, b) => a.total - b.total);
-  const cutScore = r2Done && scoredPlayers.length >= 50 ? scoredPlayers[49].total : null;
+  const projectedCutScore = scoredPlayers.length >= 50 ? scoredPlayers[49].total : null;
+  const actualCutScore = r2Done ? projectedCutScore : null;
+  // MC penalty only applies after R2 is complete
   const isMC = (name) => {
-    if (cutScore === null) return false;
+    if (actualCutScore === null) return false;
     const s = findScore(name);
     if (!s || s.total == null) return false;
-    return s.total > cutScore;
+    return s.total > actualCutScore;
   };
 
   // Worst round score among all active players (for missed-cut penalty)
@@ -305,7 +307,7 @@ function App() {
     ...p,
     tier: getTier(p.name),
     owners: teamsOwning(p.name),
-    cut: isMC(p.name),
+    cut: projectedCutScore !== null && p.total != null && p.total > projectedCutScore,
   })).sort((a,b)=>{
     if(a.cut!==b.cut) return a.cut?1:-1;
     if(a.total===null&&b.total===null) return a.name.localeCompare(b.name);
@@ -467,7 +469,7 @@ function App() {
               {showCutLine&&(
                 <div style={{display:"flex",alignItems:"center",gap:10,margin:"6px 0"}}>
                   <div style={{flex:1,height:2,background:"#dc2626"}}/>
-                  <span style={{fontSize:11,fontWeight:700,color:"#dc2626",letterSpacing:2,whiteSpace:"nowrap"}}>✂ PROJECTED CUT {cutScore!==null&&`(${fmt(cutScore)})`}</span>
+                  <span style={{fontSize:11,fontWeight:700,color:"#dc2626",letterSpacing:2,whiteSpace:"nowrap"}}>✂ {r2Done?"CUT LINE":"PROJECTED CUT"} {projectedCutScore!==null&&`(${fmt(projectedCutScore)})`}</span>
                   <div style={{flex:1,height:2,background:"#dc2626"}}/>
                 </div>
               )}
