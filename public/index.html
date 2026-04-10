@@ -316,7 +316,7 @@ function App() {
                       })}
                     </div>
                   </div>
-                  <div style={{fontSize:24,fontWeight:800,color:sc(team.total),fontFamily:"'Playfair Display',serif"}}>{fmt(team.total)}</div>
+                  <div style={{fontSize:24,fontWeight:800,color:sc(team.total),fontVariantNumeric:"tabular-nums"}}>{fmt(team.total)}</div>
                 </div>
                 {open&&(
                   <div style={{borderTop:"1px solid #eee",background:"#fafaf5",overflowX:"auto"}} onClick={e=>e.stopPropagation()}>
@@ -368,7 +368,7 @@ function App() {
                     )}
                   </div>
                   <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:16,fontWeight:800,color:sc(p.total),fontFamily:"'Playfair Display',serif"}}>{fmt(p.total)}</div>
+                    <div style={{fontSize:16,fontWeight:800,color:sc(p.total),fontVariantNumeric:"tabular-nums"}}>{fmt(p.total)}</div>
                     {p.thru && <div style={{fontSize:10,color:"#999",marginTop:1}}>{p.thru==="18"||p.thru==="F"?"F":`thru ${p.thru}`}</div>}
                   </div>
                 </div>
@@ -379,7 +379,7 @@ function App() {
                       return(
                         <div key={r} style={{textAlign:"center"}}>
                           <div style={{fontSize:9,fontWeight:700,color:"#888",letterSpacing:1}}>R{r}</div>
-                          <div style={{fontSize:15,fontWeight:700,color:sc(v??null),fontFamily:"'Playfair Display',serif"}}>{fmt(v??null)}</div>
+                          <div style={{fontSize:15,fontWeight:700,color:sc(v??null),fontVariantNumeric:"tabular-nums"}}>{fmt(v??null)}</div>
                         </div>
                       );
                     })}
@@ -427,7 +427,7 @@ function App() {
                       })}
                     </div>
                   </div>
-                  <div style={{fontSize:24,fontWeight:800,color:sc(team.total),fontFamily:"'Playfair Display',serif"}}>{fmt(team.total)}</div>
+                  <div style={{fontSize:24,fontWeight:800,color:sc(team.total),fontVariantNumeric:"tabular-nums"}}>{fmt(team.total)}</div>
                 </div>
                 {open&&(
                   <div style={{borderTop:"1px solid #eee",background:"#fafaf5",overflowX:"auto"}} onClick={e=>e.stopPropagation()}>
