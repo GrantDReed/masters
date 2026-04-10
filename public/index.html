@@ -202,7 +202,12 @@ function App() {
 
   // Cut line: top 50 and ties
   const allPlayers = Object.values(players);
-  const r2Done = allPlayers.length > 0 && allPlayers.filter(p => p.r2 != null).length >= allPlayers.length * 0.9;
+  // R2 is over when every player has r2 data AND no one is still mid-round in R2
+  const r2Done = allPlayers.length > 0 && allPlayers.every(p => p.r2 != null) && allPlayers.every(p => {
+    if (p.r3 != null) return true; // already in R3, clearly past R2
+    const t = parseInt(p.thru);
+    return isNaN(t) || t >= 18; // not mid-round
+  });
   const scoredPlayers = allPlayers.filter(p => p.total != null).sort((a, b) => a.total - b.total);
   const projectedCutScore = scoredPlayers.length >= 50 ? scoredPlayers[49].total : null;
   const actualCutScore = r2Done ? projectedCutScore : null;
