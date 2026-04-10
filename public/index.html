@@ -308,7 +308,7 @@ function App() {
                         return(
                           <span key={i} style={{fontSize:11,background:"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:9,fontWeight:700}}>{p.cost}</span>
-                            {p.name}{wheelchair&&" 🦽"}
+                            {p.name}{wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}
                             <span style={{fontWeight:700,color:sc(gTot(p.name)),fontSize:10}}>{fmt(gTot(p.name))}</span>
                             {thru&&<span style={{fontSize:9,color:"#999"}}>({thru==="18"||thru==="F"?"F":thru})</span>}
                           </span>
@@ -331,7 +331,7 @@ function App() {
                         <div key={i} style={{display:"grid",gridTemplateColumns:"minmax(140px,1fr) repeat(4,42px) 48px 48px",gap:4,alignItems:"center",padding:"6px 0 6px 28px",borderBottom:i<3?"1px solid #eee":"none"}}>
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:20,height:20,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:10,fontWeight:700}}>{p.cost}</span>
-                            <span style={{fontSize:13,fontWeight:600}}>{p.name}{wheelchair&&" 🦽"}</span>
+                            <span style={{fontSize:13,fontWeight:600}}>{p.name}{wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🦽</span>}</span>
                           </div>
                           {["r1","r2","r3","r4"].map(r=>{const v=s[r];return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:sc(v??null)}}>{fmt(v??null)}</span>;})}
                           <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:sc(tot)}}>{fmt(tot)}</span>
