@@ -200,6 +200,23 @@ function App() {
   const gTot = (name) => findScore(name)?.total ?? null;
   const gThru = (name) => findScore(name)?.thru ?? null;
 
+  // Derive corrected round scores — if total != sum of rounds, fix the latest round
+  const correctedRounds = (s) => {
+    if (!s) return { r1: null, r2: null, r3: null, r4: null };
+    const rounds = { r1: s.r1, r2: s.r2, r3: s.r3, r4: s.r4 };
+    if (s.total == null) return rounds;
+    const keys = ["r1", "r2", "r3", "r4"];
+    const nonNull = keys.filter(k => rounds[k] != null);
+    if (nonNull.length === 0) return rounds;
+    const sum = nonNull.reduce((a, k) => a + rounds[k], 0);
+    if (sum !== s.total) {
+      // Fix the latest round with data
+      const lastKey = nonNull[nonNull.length - 1];
+      rounds[lastKey] = s.total - (sum - rounds[lastKey]);
+    }
+    return rounds;
+  };
+
   // Cut line: top 50 and ties
   const allPlayers = Object.values(players);
   // R2 is over when every player has r2 data AND no one is still mid-round in R2
@@ -420,7 +437,7 @@ function App() {
                       <span/>{[1,2,3,4].map(r=><span key={r} style={{textAlign:"center"}}>R{r}</span>)}<span style={{textAlign:"center"}}>TOT</span><span style={{textAlign:"center"}}>THRU</span>
                     </div>
                     {team.players.map((p,i)=>{
-                      const s=findScore(p.name)||{};const thru=gThru(p.name);
+                      const s=findScore(p.name)||{};const cr=correctedRounds(findScore(p.name));const thru=gThru(p.name);
                       const wheelchair=team.id===4&&p.name==="Fred Couples";
                       const isOut=p.role==="swapped-out", isIn=p.role==="swapped-in", isMc=p.role==="mc";
                       const contrib=playerContribution(p.name, p.role||"original");
@@ -441,7 +458,7 @@ function App() {
                           {["r1","r2","r3","r4"].map(r=>{
                             const grayOut=(isOut&&(r==="r3"||r==="r4"))||(isIn&&(r==="r1"||r==="r2"));
                             const isPenalty=isMc&&(r==="r3"||r==="r4");
-                            const v=isPenalty?worstRound(r):(grayOut?null:s[r]);
+                            const v=isPenalty?worstRound(r):(grayOut?null:cr[r]);
                             return<span key={r} style={{textAlign:"center",fontSize:13,fontWeight:600,color:grayOut?"#ccc":isPenalty?"#ea580c":sc(v??null),fontStyle:isPenalty?"italic":"normal"}}>{grayOut?"✕":fmt(v??null)}</span>;
                           })}
                           <span style={{textAlign:"center",fontSize:14,fontWeight:800,color:sc(contrib)}}>{fmt(contrib)}</span>
@@ -495,7 +512,7 @@ function App() {
                 {open && (
                   <div style={{borderTop:"1px solid #eee",background:"#fafaf5",padding:"10px 14px",display:"grid",gridTemplateColumns:"repeat(4,1fr) 56px",gap:6}} onClick={e=>e.stopPropagation()}>
                     {[1,2,3,4].map(r=>{
-                      const v=p["r"+r];
+                      const cr=correctedRounds(p);const v=cr["r"+r];
                       return(
                         <div key={r} style={{textAlign:"center"}}>
                           <div style={{fontSize:9,fontWeight:700,color:"#888",letterSpacing:1}}>R{r}</div>
