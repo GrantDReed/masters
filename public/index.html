@@ -447,7 +447,7 @@ function App() {
                         const isOut=p.role==="swapped-out", isIn=p.role==="swapped-in", isMc=p.role==="mc";
                         const contrib=playerContribution(p.name, p.role||"original");
                         return(
-                          <span key={i} style={{fontSize:11,background:isOut?"#ddd":"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4,opacity:isOut?.55:1}}>
+                          <span key={i} style={{fontSize:11,background:isOut?"#ddd":"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4,alignSelf:"flex-start",opacity:isOut?.55:1}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:9,fontWeight:700}}>{p.cost}</span>
                             <span style={{textDecoration:isOut?"line-through":"none"}}>{p.name}</span>
                             {wheelchair&&<span style={{fontSize:"1.4em",marginLeft:3,verticalAlign:"middle"}}>🪦 RIP</span>}
@@ -589,7 +589,7 @@ function App() {
                         const isOut=p.role==="swapped-out", isIn=p.role==="swapped-in", isMc=p.role==="mc";
                         const contrib=playerContribution(p.name, p.role||"original");
                         return(
-                          <span key={i} style={{fontSize:11,background:isOut?"#ddd":"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4,opacity:isOut?.55:1}}>
+                          <span key={i} style={{fontSize:11,background:isOut?"#ddd":"#f0ece2",padding:"2px 8px",borderRadius:12,display:"inline-flex",alignItems:"center",gap:4,alignSelf:"flex-start",opacity:isOut?.55:1}}>
                             <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:"50%",background:costBg[p.cost],color:"#fff",fontSize:9,fontWeight:700}}>{p.cost}</span>
                             <span style={{textDecoration:isOut?"line-through":"none"}}>{p.name}</span>
                             {isIn&&<span style={{fontSize:9,fontWeight:700,color:"#15803d",marginLeft:2}}>↑IN</span>}
