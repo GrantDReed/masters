@@ -96,7 +96,17 @@ const NPC_TEAMS = [
 ];
 
 const TRANSFERS = [
-  // Populate after R2 cut: { teamId: 0, out: "Player Out", in: "Player In", inCost: 1 },
+  // Real team swaps
+  { teamId: 0, out: "Xander Schauffele", in: "Rory McIlroy", inCost: 4 },
+  { teamId: 1, out: "J.J. Spaun", in: "Tyrrell Hatton", inCost: 2 },
+  // teamId 2 (Tom Seymour): TBD
+  { teamId: 3, out: "Corey Conners", in: "Jason Day", inCost: 2 },
+  { teamId: 4, out: "Fred Couples", in: "Wyndham Clark", inCost: 1 },
+  { teamId: 5, out: "Bryson DeChambeau", in: "Rory McIlroy", inCost: 4 },
+  { teamId: 6, out: "Robert MacIntyre", in: "Jason Day", inCost: 2 },
+  { teamId: 7, out: "Carlos Ortiz", in: "Kristoffer Reitan", inCost: 1 },
+  // teamId 8 (Dave Hudson): TBD
+  { teamId: 9, out: "Corey Conners", in: "Jason Day", inCost: 2 },
   // NPC swaps: worst performer → best available at same tier
   { teamId: "owgr-4321", out: "J.J. Spaun", in: "Tyrrell Hatton", inCost: 2 },
   { teamId: "owgr-3322", out: "Robert MacIntyre", in: "Tyrrell Hatton", inCost: 2 },
