@@ -243,15 +243,19 @@ function App() {
     const t = parseInt(p.thru);
     return isNaN(t) || t >= 18; // not mid-round
   });
-  const scoredPlayers = allPlayers.filter(p => p.total != null).sort((a, b) => a.total - b.total);
-  const projectedCutScore = scoredPlayers.length >= 50 ? scoredPlayers[49].total : null;
+  // Cut is a 36-hole cut — always compute from R1+R2 only, never from live total
+  const r1r2Score = (p) => (p.r1 != null && p.r2 != null) ? p.r1 + p.r2 : null;
+  const playersWithR1R2 = allPlayers.filter(p => r1r2Score(p) != null).sort((a, b) => r1r2Score(a) - r1r2Score(b));
+  const projectedCutScore = playersWithR1R2.length >= 50 ? r1r2Score(playersWithR1R2[49]) : null;
   const actualCutScore = r2Done ? projectedCutScore : null;
   // MC penalty only applies after R2 is complete
   const isMC = (name) => {
     if (actualCutScore === null) return false;
     const s = findScore(name);
-    if (!s || s.total == null) return false;
-    return s.total > actualCutScore;
+    if (!s) return false;
+    const sc36 = r1r2Score(s);
+    if (sc36 == null) return false;
+    return sc36 > actualCutScore;
   };
 
   // Worst round score among all active players (for missed-cut penalty)
@@ -350,7 +354,7 @@ function App() {
     ...p,
     tier: getTier(p.name),
     owners: teamsOwning(p.name),
-    cut: projectedCutScore !== null && p.total != null && p.total > projectedCutScore,
+    cut: projectedCutScore !== null && r1r2Score(p) != null && r1r2Score(p) > projectedCutScore,
   })).sort((a,b)=>{
     if(a.cut!==b.cut) return a.cut?1:-1;
     if(a.total===null&&b.total===null) return a.name.localeCompare(b.name);
