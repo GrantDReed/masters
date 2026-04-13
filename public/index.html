@@ -117,7 +117,7 @@ const TRANSFERS = [
   { teamId: "stiff", out: "Bryson DeChambeau", in: "Rory McIlroy", inCost: 4 },
 ];
 
-const POLL_MS = 3 * 60 * 1000;
+const POLL_MS = 60 * 60 * 1000; // hourly — tournament is over
 const costBg = { 4: "#b91c1c", 3: "#1d4ed8", 2: "#15803d", 1: "#7e22ce" };
 
 function normalize(n) {
@@ -212,9 +212,11 @@ function App() {
     }
   }, []);
 
+  // Fetch once on mount
+  useEffect(() => { doFetch(); }, []);
+  // Optional polling if user re-enables
   useEffect(() => {
     if (autoPoll) {
-      doFetch();
       intervalRef.current = setInterval(doFetch, POLL_MS);
       return () => clearInterval(intervalRef.current);
     } else {
